@@ -1,4 +1,4 @@
-# Charter Reform Public Events Monitor
+# Charter Reform Public Events Page Monitor
 
 Automates monitoring of the Los Angeles Charter Reform Commission **Public Events** page for new meetings, agendas, minutes, and related materials.
 
