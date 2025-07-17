@@ -2,7 +2,7 @@
 
 Automates monitoring of the Los Angeles Charter Reform Commission **Public Events** page for new meetings, agendas, minutes, and related materials.
 
-- Scheduled GitHub Action checks every 30 minutes.
+- Scheduled GitHub Action checks every 5 minutes.
 - Changes trigger snapshot archive, diff generation, and optional email.
 - Visual diff & history published via GitHub Pages (`/docs`).
 
