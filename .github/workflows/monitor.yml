@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # allow pushing changes
+  contents: write # allow pushing changes
+  issues: write 
 
 jobs:
   monitor:
@@ -32,6 +33,7 @@ jobs:
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_RECIPIENT: ${{ secrets.EMAIL_RECIPIENT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python monitor.py
 
       - name: Commit & push if changed
