@@ -248,7 +248,7 @@ def main():
         print(f"ERROR fetching page: {e}", file=sys.stderr)
         sys.exit(1)
 
-    current_text, current_html = extract_visible_content(html)
+    current_text, current_html = extract_visible_text(html)
     current_hash = sha256_text(current_text)
     previous_text = load_last_text()
     previous_hash = sha256_text(previous_text) if previous_text else ""
