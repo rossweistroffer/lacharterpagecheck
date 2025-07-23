@@ -35,45 +35,39 @@ def fetch_page():
     r.raise_for_status()
     return r.text
 
-def extract_main_content(html):
-    """
-    Try to grab just the main content region to reduce noise. We fall back
-    progressively (id contains 'main', <main>, then full body).
-    """
+def extract_visible_text(html):
     soup = BeautifulSoup(html, "html.parser")
 
-    # Progressive selection
-    main = (
-        soup.find(id=lambda v: v and "main" in v.lower())
-        or soup.find("main")
-        or soup.body
-        or soup
-    )
+    # Remove scripts, styles, noscript, head, meta, and link tags
+    for tag in soup(['script', 'style', 'noscript', 'head', 'meta', 'link']):
+        tag.decompose()
 
-    # Remove common nav/footer blocks inside main (defensive)
-    for sel in ["nav", "header", "footer", ".site-footer", ".usa-footer", "#footer"]:
-        for el in main.select(sel):
-            el.decompose()
+    # Remove common layout/navigation clutter
+    for tag in soup(['nav', 'header', 'footer', 'aside']):
+        tag.decompose()
 
-    # Normalize text for hashing & diff: separate logical chunks by newline
-    lines = []
-    for node in main.descendants:
-        if node.name == "a":
-            href = node.get("href", "").strip()
-            text = node.get_text(strip=True)
-            if href or text:
-                lines.append(f"[LINK] {text} --> {href}")
-        elif node.name in ("h1", "h2", "h3", "h4"):
-            text = node.get_text(" ", strip=True)
-            if text:
-                lines.append(f"[HDR] {text}")
-        elif node.string and node.string.strip():
-            text = " ".join(node.string.split())
-            lines.append(text)
+    # Remove elements hidden with CSS display:none or aria-hidden
+    for tag in soup.find_all(style=lambda s: s and 'display:none' in s):
+        tag.decompose()
+    for tag in soup.find_all(attrs={"aria-hidden": "true"}):
+        tag.decompose()
 
-    normalized = "\n".join(l.strip() for l in lines if l.strip())
-    clean_html = str(main)
-    return normalized, clean_html
+    # Gather visible text from standard block elements (and links)
+    text_chunks = []
+    for element in soup.find_all(['p', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'a', 'div']):
+        # Use direct string if available, else recursive get_text
+        if element.string and element.string.strip():
+            text_chunks.append(element.string.strip())
+        else:
+            full = element.get_text(separator=' ', strip=True)
+            if full:
+                text_chunks.append(full)
+
+    # Deduplicate while preserving order
+    lines = [l for l in (t.strip() for t in text_chunks) if l]
+    normalized = '\n'.join(dict.fromkeys(lines))
+
+    return normalized, str(soup)
 
 # ------------------------------------------------------------------ hashing
 
@@ -254,7 +248,7 @@ def main():
         print(f"ERROR fetching page: {e}", file=sys.stderr)
         sys.exit(1)
 
-    current_text, current_html = extract_main_content(html)
+    current_text, current_html = extract_visible_content(html)
     current_hash = sha256_text(current_text)
     previous_text = load_last_text()
     previous_hash = sha256_text(previous_text) if previous_text else ""
