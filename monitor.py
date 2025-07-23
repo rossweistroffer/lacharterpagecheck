@@ -3,11 +3,6 @@
 Fetch the Charter Reform Commission Public Events page, detect changes,
 archive snapshots, generate an HTML diff report in docs/index.html,
 and optionally send an email when updates occur.
-
-Environment variables (configure as GitHub Actions secrets):
-  EMAIL_SENDER      (optional)
-  EMAIL_PASSWORD    (optional - Gmail App Password recommended)
-  EMAIL_RECIPIENT   (optional)
 """
 
 import os
@@ -205,22 +200,30 @@ def escape_html(s: str) -> str:
 # ------------------------------------------------------------------ email (optional)
 
 def send_email_notification(subject: str, body: str):
-    sender = os.getenv("EMAIL_SENDER")
-    password = os.getenv("EMAIL_PASSWORD")
-    recipient = os.getenv("EMAIL_RECIPIENT")
+    SMTP_HOST = "smtp.mailgun.org"
+    SMTP_PORT = 587
+    SMTP_USER = os.getenv("EMAIL_SENDER")     
+    SMTP_PASS = os.getenv("EMAIL_PASSWORD")
+    TO = os.getenv("EMAIL_RECIPIENT")
 
-    if not (sender and password and recipient):
-        print("Email env vars not fully set; skipping email.")
+    if not all([SMTP_USER, SMTP_PASS, TO]):
+        print("Missing Mailgun email environment variables.")
         return
 
     msg = MIMEText(body)
     msg["Subject"] = subject
-    msg["From"] = sender
-    msg["To"] = recipient
+    msg["From"] = SMTP_USER
+    msg["To"] = TO
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(sender, password)
-        server.send_message(msg)
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASS)
+            server.sendmail(SMTP_USER, TO, msg.as_string())
+            print("✅ Email notification sent.")
+    except Exception as e:
+        print(f"❌ Failed to send email: {e}")
+
 
 # ------------------------------------------------------------------ main
 
