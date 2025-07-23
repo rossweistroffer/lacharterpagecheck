@@ -13,7 +13,6 @@ import hashlib
 import smtplib
 from email.mime.text import MIMEText
 from datetime import datetime, timezone
-
 import requests
 from bs4 import BeautifulSoup
 from difflib import HtmlDiff
@@ -223,6 +222,27 @@ def send_email_notification(subject: str, body: str):
             print("✅ Email notification sent.")
     except Exception as e:
         print(f"❌ Failed to send email: {e}")
+
+# ------------------- GitHub issue creation ------------------- #
+
+def create_github_issue(title, body):
+    repo = os.getenv("GITHUB_REPOSITORY")
+    token = os.getenv("GITHUB_TOKEN")
+    if not repo or not token:
+        print("⚠️ GitHub issue creation skipped (missing repo or token).")
+        return
+
+    url = f"https://api.github.com/repos/{repo}/issues"
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github+json",
+    }
+    payload = {"title": title, "body": body}
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code == 201:
+        print("✅ GitHub issue created successfully.")
+    else:
+        print(f"❌ Failed to create GitHub issue: {response.status_code} {response.text}")        
 
 
 # ------------------------------------------------------------------ main
