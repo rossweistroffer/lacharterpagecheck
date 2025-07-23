@@ -262,7 +262,7 @@ def main():
         stamp = archive_snapshot(current_text, current_html, ts)
         build_report(current_text, current_html, current_hash, previous_text, previous_hash, stamp)
         subj = "🔔 Charter Public Events Page Updated"
-        body = f"A change was detected at {ts.isoformat()} UTC.\n\nSource: {URL}\nNew hash: {current_hash}\nPrev hash: {previous_hash}"
+        body = f"A change was detected at {ts.isoformat()} UTC.\n\nSource: {URL}\nNew text: {current_text}\nPrev text: {previous_text}"
         send_email_notification(subj, body)
     else:
         print("No change; no commit will be made.")
